@@ -1,11 +1,11 @@
 package com.linkjb.camelcomponent.conf;
 
-/**
- * @ClassName SwaggerConfig
- * @Description TODO
+/*
+  @ClassName SwaggerConfig
+ * @Description swagger
  * @Author shark
  * @Data 2022/2/15 17:01
- **/
+ */
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
