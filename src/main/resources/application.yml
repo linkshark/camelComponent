@@ -1,0 +1,6 @@
+
+server:
+  port: 6789
+camel:
+  springboot:
+    auto-startup: false
