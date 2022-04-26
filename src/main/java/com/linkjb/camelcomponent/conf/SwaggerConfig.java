@@ -6,6 +6,7 @@ package com.linkjb.camelcomponent.conf;
  * @Author shark
  * @Data 2022/2/15 17:01
  */
+import com.alibaba.druid.pool.DruidDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

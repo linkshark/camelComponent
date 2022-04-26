@@ -1,6 +1,6 @@
 package com.linkjb.camelcomponent.camel;
 
-import org.apache.camel.Exchange;
+
 import org.apache.camel.builder.RouteBuilder;
 import org.springframework.stereotype.Component;
 
@@ -13,9 +13,20 @@ import org.springframework.stereotype.Component;
 @Component
 public class Route1 extends RouteBuilder {
     @Override
-    public void configure() throws Exception {
-        from("jetty:http://0.0.0.0:1234/go").id("test1")
-                .autoStartup(true).convertBodyTo(String.class, "UTF-8").setBody(constant("测试成功"))
+    public void configure() {
+        from("jetty:http://0.0.0.0:8848/go").id("test1")
+                .autoStartup(true).convertBodyTo(String.class, "UTF-8").setBody(constant("select * from test"))
+                .to("jdbc:datasource")
+                .to("log:ss");
+
+        from("jetty:http://0.0.0.0:8848/gocount").id("test2")
+                .autoStartup(true).convertBodyTo(String.class, "UTF-8").setBody(constant("select count(*) from test"))
+                .to("jdbc:datasource")
+                .to("log:ss");
+
+        from("jetty:http://0.0.0.0:8848/random").id("test3")
+                .autoStartup(true).convertBodyTo(String.class, "UTF-8")
+                .to("jdbc:datasource?useHeadersAsParameters=true&statement.maxRows=10&statement.fetchSize=10")
                 .to("log:ss");
     }
 }
