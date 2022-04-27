@@ -154,7 +154,8 @@ public class NewJdbcProducer extends DefaultProducer {
 
         try {
             final String preparedQuery
-                    = this.jdbcDTO.getPrepareStatementStrategy().prepareQuery(sql, this.jdbcDTO.isAllowNamedParameters());
+                    = this.jdbcDTO.getPrepareStatementStrategy().prepareQuery(sql, jdbcDTO == null ?
+                    this.jdbcDTO.isAllowNamedParameters() : jdbcDTO.isAllowNamedParameters());
 
             Boolean shouldRetrieveGeneratedKeys
                     = exchange.getIn().getHeader(JdbcConstants.JDBC_RETRIEVE_GENERATED_KEYS, false, Boolean.class);
@@ -189,7 +190,7 @@ public class NewJdbcProducer extends DefaultProducer {
             boolean stmtExecutionResult = ps.execute();
             if (stmtExecutionResult) {
                 rs = ps.getResultSet();
-                shouldCloseResources = setResultSet(exchange, conn, rs);
+                shouldCloseResources = setResultSet(exchange, conn, rs, jdbcDTO);
             } else {
                 int updateCount = ps.getUpdateCount();
                 // and then set the new header
@@ -206,6 +207,46 @@ public class NewJdbcProducer extends DefaultProducer {
             }
         }
         return shouldCloseResources;
+    }
+
+    private boolean setResultSet(Exchange exchange, Connection conn, ResultSet rs) throws Exception {
+        boolean answer = true;
+
+        ResultSetIterator iterator = new ResultSetIterator(
+                conn, rs, this.jdbcDTO.isUseJDBC4ColumnNameAndLabelSemantics(), this.jdbcDTO.isUseGetBytesForBlob());
+
+        JdbcOutputType outputType = this.jdbcDTO.getOutputType();
+        exchange.getMessage().setHeader(JdbcConstants.JDBC_COLUMN_NAMES, iterator.getColumnNames());
+        if (outputType == JdbcOutputType.StreamList) {
+            exchange.getMessage()
+                    .setBody(new StreamListIterator(
+                            getEndpoint().getCamelContext(), getEndpoint().getOutputClass(), getEndpoint().getBeanRowMapper(),
+                            iterator));
+            exchange.adapt(ExtendedExchange.class).addOnCompletion(new ResultSetIteratorCompletion(iterator));
+            // do not close resources as we are in streaming mode
+            answer = false;
+        } else if (outputType == JdbcOutputType.SelectList) {
+
+            List<Map<String, Object>> list = extractRows(iterator);
+            exchange.getMessage().setHeader(NewJdbcConstants.JDBC_ROW_COUNT, list.size());
+            //// TODO: 2022/4/26  开始递归循环子查询
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put(this.jdbcDTO.getQueryName(), list);
+            if (this.jdbcDTO.getChild() != null && this.jdbcDTO.getChild().size() > 0) {
+                for (Map<String, Object> map : list) {
+                    for (JdbcDTO sonJdbcDTO : this.jdbcDTO.getChild()) {
+                        exchange.getMessage().setHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, map);
+                        exchange.getMessage().setBody(map);
+                        this.process(exchange, sonJdbcDTO);
+                        map.put(sonJdbcDTO.getQueryName(), exchange.getMessage().getBody());
+                    }
+
+                }
+            }
+            exchange.getMessage().setBody(com.alibaba.fastjson.JSON.toJSONString(resultMap));
+        }
+
+        return answer;
     }
 
     private boolean doCreateAndExecuteSqlStatement(Exchange exchange, String sql, Connection conn, JdbcDTO jdbcDTO) throws Exception {
@@ -246,7 +287,7 @@ public class NewJdbcProducer extends DefaultProducer {
 
             if (stmtExecutionResult) {
                 rs = stmt.getResultSet();
-                shouldCloseResources = setResultSet(exchange, conn, rs);
+                shouldCloseResources = setResultSet(exchange, conn, rs, jdbcDTO);
             } else {
                 int updateCount = stmt.getUpdateCount();
                 // and then set the new header
@@ -336,13 +377,13 @@ public class NewJdbcProducer extends DefaultProducer {
      *
      * @return whether to close resources
      */
-    protected boolean setResultSet(Exchange exchange, Connection conn, ResultSet rs) throws SQLException {
+    protected boolean setResultSet(Exchange exchange, Connection conn, ResultSet rs, JdbcDTO jdbcDTO) throws Exception {
         boolean answer = true;
 
         ResultSetIterator iterator = new ResultSetIterator(
-                conn, rs, jdbcDTO.isUseJDBC4ColumnNameAndLabelSemantics(), jdbcDTO.isUseGetBytesForBlob());
+                conn, rs, this.jdbcDTO.isUseJDBC4ColumnNameAndLabelSemantics(), this.jdbcDTO.isUseGetBytesForBlob());
 
-        JdbcOutputType outputType = jdbcDTO.getOutputType();
+        JdbcOutputType outputType = this.jdbcDTO.getOutputType();
         exchange.getMessage().setHeader(JdbcConstants.JDBC_COLUMN_NAMES, iterator.getColumnNames());
         if (outputType == JdbcOutputType.StreamList) {
             exchange.getMessage()
@@ -353,24 +394,55 @@ public class NewJdbcProducer extends DefaultProducer {
             // do not close resources as we are in streaming mode
             answer = false;
         } else if (outputType == JdbcOutputType.SelectList) {
-            List<Map<String,Object>> list = extractRows(iterator);
-            exchange.getMessage().setHeader(NewJdbcConstants.JDBC_ROW_COUNT, list.size());
-            String s = JSON.toString(list);
-            //// TODO: 2022/4/26  开始递归循环子查询
-            Map<String,Object> resultMap = new HashMap<>();
-            resultMap.put(jdbcDTO.getQueryName(),list);
-            if(jdbcDTO.getChild()!=null&&jdbcDTO.getChild().size()>0){
-                for(Map<String,Object> map : list){
-                    exchange.getMessage().setHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, com.alibaba.fastjson.JSON.toJSONString(map));
+            if (jdbcDTO == null) {
+                List<Map<String, Object>> list = extractRows(iterator);
+                exchange.getMessage().setHeader(NewJdbcConstants.JDBC_ROW_COUNT, list.size());
+                //// TODO: 2022/4/26  开始递归循环子查询
+                Map<String, Object> resultMap = new HashMap<>();
+                resultMap.put(this.jdbcDTO.getQueryName(), list);
+                if (this.jdbcDTO.getChild() != null && this.jdbcDTO.getChild().size() > 0) {
+                    for (Map<String, Object> map : list) {
+                        exchange.getMessage().setHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, map);
+                        exchange.getMessage().setBody(map);
+                        this.process(exchange, this.jdbcDTO.getChild().get(0));
+                        map.put(this.jdbcDTO.getChild().get(0).getQueryName(), exchange.getMessage().getBody());
+//                    for(JdbcDTO sonJdbcDTO: this.jdbcDTO.getChild()){
+//                        exchange.getMessage().setHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, map);
+//                        exchange.getMessage().setBody(map);
+//                        this.process(exchange,sonJdbcDTO);
+//                        map.put(sonJdbcDTO.getQueryName(),exchange.getMessage().getBody());
+//                    }
 
-
+                    }
                 }
+                exchange.getMessage().setBody(com.alibaba.fastjson.JSON.toJSONString(resultMap));
+            } else {
+                List<Map<String, Object>> list = extractRows(iterator);
+                exchange.getMessage().setHeader(NewJdbcConstants.JDBC_ROW_COUNT, list.size());
+                //// TODO: 2022/4/26  开始递归循环子查询
+                //Map<String,Object> resultMap = new HashMap<>();
+                //resultMap.put(this.jdbcDTO.getQueryName(),list);
+                if (jdbcDTO.getChild() != null && this.jdbcDTO.getChild().size() > 0) {
+                    for (Map<String, Object> map : list) {
+                        exchange.getMessage().setHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, map);
+                        exchange.getMessage().setBody(map);
+                        this.process(exchange, jdbcDTO.getChild().get(0));
+//                    for(JdbcDTO sonJdbcDTO: this.jdbcDTO.getChild()){
+//                        exchange.getMessage().setHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, map);
+//                        exchange.getMessage().setBody(map);
+//                        this.process(exchange,sonJdbcDTO);
+//                        map.put(sonJdbcDTO.getQueryName(),exchange.getMessage().getBody());
+//                    }
+
+                    }
+                }
+                exchange.getMessage().setBody(list);
             }
-            exchange.getMessage().setBody(com.alibaba.fastjson.JSON.toJSONString(resultMap));
         }
 
         return answer;
     }
+
 
     @SuppressWarnings("unchecked")
     private List extractRows(ResultSetIterator iterator) throws SQLException {
