@@ -1,6 +1,8 @@
 package com.linkjb.camelcomponent.dto;
 
 import com.linkjb.camelcomponent.jdbc.*;
+import com.linkjb.camelcomponent.newjdbc.NewDefaultJdbcPrepareStatementStrategy;
+import com.linkjb.camelcomponent.newjdbc.NewJdbcPrepareStatementStrategy;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -24,6 +26,8 @@ public class JdbcDTO {
     private Map<String,Object> paramter;
     @ApiModelProperty("数据源ID")
     private String dataSourceId;
+    @ApiModelProperty("sql语句")
+    private String sql;
     @ApiModelProperty("子查询")
     private List<JdbcDTO> child;
     @ApiModelProperty("指定数据源")
@@ -34,18 +38,18 @@ public class JdbcDTO {
     private boolean transacted;
     @ApiModelProperty("Camel 会将 JDBC 连接上的 autoCommit 设置为 false，如果 resetAutoCommit 为 true，则在执行语句后提交更改并在最后重置连接的 autoCommit 标志。 如果 JDBC 连接不支持重置 autoCommit 标志，可以将 resetAutoCommit 标志设置为 false，Camel 不会尝试重置 autoCommit 标志。 当与 XA 事务一起使用时，您很可能需要将其设置为 false，以便事务管理器负责提交此 tx。")
     private boolean resetAutoCommit = true;
-    @ApiModelProperty("Datasour参数Map 比如maxRows(返回行数) 或fetchSize")
+    @ApiModelProperty("DataSource参数Map 比如maxRows(返回行数) 或fetchSize")
     private Map<String, Object> parameters;
     @ApiModelProperty("说了你也不懂,关于JDBC3.0 和 4.0 等版本区别的,默认就行了")
     private boolean useJDBC4ColumnNameAndLabelSemantics = true;
     @ApiModelProperty("将 BLOB 列作为字节而不是字符串数据读取。这可能需要某些数据库，例如 Oracle，就必须将 BLOB 列读取为字节。")
     private boolean useGetBytesForBlob;
     @ApiModelProperty("别管了,后端会创建的")
-    private JdbcPrepareStatementStrategy prepareStatementStrategy = new DefaultJdbcPrepareStatementStrategy();
+    private NewJdbcPrepareStatementStrategy prepareStatementStrategy = new NewDefaultJdbcPrepareStatementStrategy();
     @ApiModelProperty("是否允许在查询中使用命名参数")
     private boolean allowNamedParameters = true;
-    @ApiModelProperty("是否使用消息头")
-    private boolean useHeadersAsParameters;
+    @ApiModelProperty("是否使用消息头 默认开启")
+    private boolean useHeadersAsParameters = true;
     @ApiModelProperty("查询结果,默认SelectList")
     private JdbcOutputType outputType = JdbcOutputType.SelectList;
     @ApiModelProperty("输出序列化结果类,全路径名哦")

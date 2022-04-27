@@ -26,9 +26,8 @@ import java.util.Set;
  * @Author shark
  * @Data 2022/4/22 14:05
  **/
-@Component("sharkJdbc")
+@Component("sharkjdbc")
 @Slf4j
-@Data
 public class NewJdbcComponent extends DefaultComponent {
 
     @Autowired
@@ -54,11 +53,11 @@ public class NewJdbcComponent extends DefaultComponent {
             dataSources = this.dataSources;
             dataSourceRef = "component";
         }else{
-            if(parameters.get("param")==null){
+            if(remaining==null){
                 throw new IllegalArgumentException("使用sharkJdbc组件必须使用param参数封装jdbcDto");
             }else{
-                String param = parameters.get("param").toString();
-                jdbcDTO = JSON.parseObject(param, JdbcDTO.class);
+                //String param = parameters.get("param").toString();
+                jdbcDTO = JSON.parseObject(remaining, JdbcDTO.class);
                 Set<DataSource> set = new HashSet<>();
                 getDataSourceSet(jdbcDTO,set);
                 this.dataSources = set;
@@ -120,7 +119,7 @@ public class NewJdbcComponent extends DefaultComponent {
                 }
                 log.debug("从camelContext中获取数据源: {}", target);
             }
-            if(jdbcDTO.getChild().size()>0){
+            if(jdbcDTO.getChild()!=null&&jdbcDTO.getChild().size()>0){
                 for(JdbcDTO sonDto:jdbcDTO.getChild()){
                     getDataSourceSet(sonDto,set);
                 }

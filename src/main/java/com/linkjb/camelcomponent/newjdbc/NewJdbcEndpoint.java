@@ -31,40 +31,40 @@ import java.util.Map;
 /**
  * Access databases through SQL and JDBC.
  */
-@UriEndpoint(firstVersion = "1.2.0", scheme = "jdbc", title = "JDBC", syntax = "jdbc:dataSourceName", producerOnly = true,
-             category = { Category.DATABASE, Category.SQL })
+//@UriEndpoint(firstVersion = "1.2.0", scheme = "sharkjdbc", title = "JDBC", syntax = "jdbc:dataSourceName", producerOnly = true,
+//             category = { Category.DATABASE, Category.SQL })
 public class NewJdbcEndpoint extends DefaultEndpoint {
 
     private DataSource dataSource;
 
-    @UriPath
+    ///@UriPath
     @Metadata(required = true)
     private String dataSourceName;
-    @UriParam
+    //@UriParam
     private int readSize;
-    @UriParam
+    //@UriParam
     private boolean transacted;
-    @UriParam(defaultValue = "true")
+    //@UriParam(defaultValue = "true")
     private boolean resetAutoCommit = true;
-    @UriParam(prefix = "statement.", multiValue = true)
+    //@UriParam(prefix = "statement.", multiValue = true)
     private Map<String, Object> parameters;
-    @UriParam(defaultValue = "true")
+    //@UriParam(defaultValue = "true")
     private boolean useJDBC4ColumnNameAndLabelSemantics = true;
-    @UriParam
+    //@UriParam
     private boolean useGetBytesForBlob;
-    @UriParam(label = "advanced")
-    private JdbcPrepareStatementStrategy prepareStatementStrategy = new DefaultJdbcPrepareStatementStrategy();
-    @UriParam(defaultValue = "true")
+    //@UriParam(label = "advanced")
+    private NewJdbcPrepareStatementStrategy prepareStatementStrategy = new NewDefaultJdbcPrepareStatementStrategy();
+    //@UriParam(defaultValue = "true")
     private boolean allowNamedParameters = true;
-    @UriParam
+    //@UriParam
     private boolean useHeadersAsParameters;
-    @UriParam(defaultValue = "SelectList")
+    //@UriParam(defaultValue = "SelectList")
     private JdbcOutputType outputType = JdbcOutputType.SelectList;
-    @UriParam
+    //@UriParam
     private String outputClass;
-    @UriParam(label = "advanced")
+    //@UriParam(label = "advanced")
     private BeanRowMapper beanRowMapper = new DefaultBeanRowMapper();
-    @UriParam(label = "advanced")
+    //@UriParam(label = "advanced")
     private ConnectionStrategy connectionStrategy = new DefaultConnectionStrategy();
 
     private JdbcDTO jdbcDTO;
@@ -187,15 +187,11 @@ public class NewJdbcEndpoint extends DefaultEndpoint {
         this.useJDBC4ColumnNameAndLabelSemantics = useJDBC4ColumnNameAndLabelSemantics;
     }
 
-    public JdbcPrepareStatementStrategy getPrepareStatementStrategy() {
+    public NewJdbcPrepareStatementStrategy getPrepareStatementStrategy() {
         return prepareStatementStrategy;
     }
 
-    /**
-     * Allows the plugin to use a custom JdbcPrepareStatementStrategy to control
-     * preparation of the query and prepared statement.
-     */
-    public void setPrepareStatementStrategy(JdbcPrepareStatementStrategy prepareStatementStrategy) {
+    public void setPrepareStatementStrategy(NewJdbcPrepareStatementStrategy prepareStatementStrategy) {
         this.prepareStatementStrategy = prepareStatementStrategy;
     }
 
@@ -281,6 +277,14 @@ public class NewJdbcEndpoint extends DefaultEndpoint {
      */
     public void setConnectionStrategy(ConnectionStrategy connectionStrategy) {
         this.connectionStrategy = connectionStrategy;
+    }
+
+    public JdbcDTO getJdbcDTO() {
+        return jdbcDTO;
+    }
+
+    public void setJdbcDTO(JdbcDTO jdbcDTO) {
+        this.jdbcDTO = jdbcDTO;
     }
 
     @Override

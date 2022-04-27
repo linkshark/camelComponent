@@ -62,27 +62,43 @@ public class NewJdbcProducer extends DefaultProducer {
      */
     @Override
     public void process(Exchange exchange) throws Exception {
-        if (getEndpoint().isResetAutoCommit()) {
-            processingSqlBySettingAutoCommit(exchange);
-        } else {
-            processingSqlWithoutSettingAutoCommit(exchange);
-        }
+        //if (getEndpoint().isResetAutoCommit()) {
+            processingSqlBySettingAutoCommit(exchange,null);
+        //} else {
+            //processingSqlWithoutSettingAutoCommit(exchange);
+        //}
     }
 
-    private void processingSqlBySettingAutoCommit(Exchange exchange) throws Exception {
-        String sql = exchange.getIn().getBody(String.class);
+    public void process(Exchange exchange,JdbcDTO jdbcDTO) throws Exception {
+        //if (getEndpoint().isResetAutoCommit()) {
+        processingSqlBySettingAutoCommit(exchange,jdbcDTO);
+        //} else {
+        //processingSqlWithoutSettingAutoCommit(exchange);
+        //}
+    }
+
+
+
+    private void processingSqlBySettingAutoCommit(Exchange exchange, JdbcDTO jdbcDTO) throws Exception {
+        String sql;
+        if(jdbcDTO==null){
+             sql  = this.jdbcDTO.getSql();
+        }else{
+            sql = jdbcDTO.getSql();
+        }
+        //String sql = exchange.getIn().getBody(String.class);
         Connection conn = null;
         Boolean autoCommit = null;
         boolean shouldCloseResources = true;
 
         try {
-            conn = connectionStrategy.getConnection(dataSource);
+            conn = connectionStrategy.getConnection(jdbcDTO==null?this.jdbcDTO.getDataSource(): jdbcDTO.getDataSource());
             autoCommit = conn.getAutoCommit();
             if (autoCommit) {
                 conn.setAutoCommit(false);
             }
 
-            shouldCloseResources = createAndExecuteSqlStatement(exchange, sql, conn);
+            shouldCloseResources = createAndExecuteSqlStatement(exchange, sql, conn,jdbcDTO);
 
             conn.commit();
         } catch (Exception e) {
@@ -109,7 +125,7 @@ public class NewJdbcProducer extends DefaultProducer {
 
         try {
             conn = connectionStrategy.getConnection(dataSource);
-            shouldCloseResources = createAndExecuteSqlStatement(exchange, sql, conn);
+            shouldCloseResources = createAndExecuteSqlStatement(exchange, sql, conn, jdbcDTO);
         } finally {
             if (shouldCloseResources && !connectionStrategy.isConnectionTransactional(conn, dataSource)) {
                 closeQuietly(conn);
@@ -117,22 +133,28 @@ public class NewJdbcProducer extends DefaultProducer {
         }
     }
 
-    private boolean createAndExecuteSqlStatement(Exchange exchange, String sql, Connection conn) throws Exception {
-        if (getEndpoint().isUseHeadersAsParameters()) {
-            return doCreateAndExecuteSqlStatementWithHeaders(exchange, sql, conn);
+    private boolean createAndExecuteSqlStatement(Exchange exchange, String sql, Connection conn, JdbcDTO jdbcDTO) throws Exception {
+        if (jdbcDTO==null?this.jdbcDTO.isUseHeadersAsParameters():jdbcDTO.isUseHeadersAsParameters()) {
+            return doCreateAndExecuteSqlStatementWithHeadersAndBody(exchange, sql, conn,jdbcDTO);
         } else {
-            return doCreateAndExecuteSqlStatement(exchange, sql, conn);
+            return doCreateAndExecuteSqlStatement(exchange, sql, conn,jdbcDTO);
         }
     }
-
-    private boolean doCreateAndExecuteSqlStatementWithHeaders(Exchange exchange, String sql, Connection conn) throws Exception {
+    /*
+     * @Author shark
+     * @Description //使用头或体来替换
+     * @Date 2022/4/27
+     * @Param
+     * @return
+     **/
+    private boolean doCreateAndExecuteSqlStatementWithHeadersAndBody(Exchange exchange, String sql, Connection conn, JdbcDTO jdbcDTO) throws Exception {
         PreparedStatement ps = null;
         ResultSet rs = null;
         boolean shouldCloseResources = true;
 
         try {
             final String preparedQuery
-                    = getEndpoint().getPrepareStatementStrategy().prepareQuery(sql, getEndpoint().isAllowNamedParameters());
+                    = this.jdbcDTO.getPrepareStatementStrategy().prepareQuery(sql, this.jdbcDTO.isAllowNamedParameters());
 
             Boolean shouldRetrieveGeneratedKeys
                     = exchange.getIn().getHeader(JdbcConstants.JDBC_RETRIEVE_GENERATED_KEYS, false, Boolean.class);
@@ -157,9 +179,9 @@ public class NewJdbcProducer extends DefaultProducer {
             int expectedCount = ps.getParameterMetaData().getParameterCount();
 
             if (expectedCount > 0) {
-                Iterator<?> it = getEndpoint().getPrepareStatementStrategy()
+                Iterator<?> it = this.jdbcDTO.getPrepareStatementStrategy()
                         .createPopulateIterator(sql, preparedQuery, expectedCount, exchange, exchange.getIn().getBody());
-                getEndpoint().getPrepareStatementStrategy().populateStatement(ps, it, expectedCount);
+                this.jdbcDTO.getPrepareStatementStrategy().populateStatement(ps, it, expectedCount);
             }
 
             LOG.debug("Executing JDBC PreparedStatement: {}", sql);
@@ -186,7 +208,7 @@ public class NewJdbcProducer extends DefaultProducer {
         return shouldCloseResources;
     }
 
-    private boolean doCreateAndExecuteSqlStatement(Exchange exchange, String sql, Connection conn) throws Exception {
+    private boolean doCreateAndExecuteSqlStatement(Exchange exchange, String sql, Connection conn, JdbcDTO jdbcDTO) throws Exception {
         Statement stmt = null;
         ResultSet rs = null;
         boolean shouldCloseResources = true;
@@ -318,9 +340,9 @@ public class NewJdbcProducer extends DefaultProducer {
         boolean answer = true;
 
         ResultSetIterator iterator = new ResultSetIterator(
-                conn, rs, getEndpoint().isUseJDBC4ColumnNameAndLabelSemantics(), getEndpoint().isUseGetBytesForBlob());
+                conn, rs, jdbcDTO.isUseJDBC4ColumnNameAndLabelSemantics(), jdbcDTO.isUseGetBytesForBlob());
 
-        JdbcOutputType outputType = getEndpoint().getOutputType();
+        JdbcOutputType outputType = jdbcDTO.getOutputType();
         exchange.getMessage().setHeader(JdbcConstants.JDBC_COLUMN_NAMES, iterator.getColumnNames());
         if (outputType == JdbcOutputType.StreamList) {
             exchange.getMessage()
@@ -331,12 +353,20 @@ public class NewJdbcProducer extends DefaultProducer {
             // do not close resources as we are in streaming mode
             answer = false;
         } else if (outputType == JdbcOutputType.SelectList) {
-            List<?> list = extractRows(iterator);
-            exchange.getMessage().setHeader(JdbcConstants.JDBC_ROW_COUNT, list.size());
+            List<Map<String,Object>> list = extractRows(iterator);
+            exchange.getMessage().setHeader(NewJdbcConstants.JDBC_ROW_COUNT, list.size());
             String s = JSON.toString(list);
-            exchange.getMessage().setBody(s);
-        } else if (outputType == JdbcOutputType.SelectOne) {
-            exchange.getMessage().setBody(extractSingleRow(iterator));
+            //// TODO: 2022/4/26  开始递归循环子查询
+            Map<String,Object> resultMap = new HashMap<>();
+            resultMap.put(jdbcDTO.getQueryName(),list);
+            if(jdbcDTO.getChild()!=null&&jdbcDTO.getChild().size()>0){
+                for(Map<String,Object> map : list){
+                    exchange.getMessage().setHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, com.alibaba.fastjson.JSON.toJSONString(map));
+
+
+                }
+            }
+            exchange.getMessage().setBody(com.alibaba.fastjson.JSON.toJSONString(resultMap));
         }
 
         return answer;

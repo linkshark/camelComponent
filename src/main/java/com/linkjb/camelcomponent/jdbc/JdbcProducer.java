@@ -16,6 +16,7 @@
  */
 package com.linkjb.camelcomponent.jdbc;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.Exchange;
 import org.apache.camel.ExtendedExchange;
 import org.apache.camel.spi.Synchronization;
@@ -28,7 +29,7 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
-
+@Slf4j
 public class JdbcProducer extends DefaultProducer {
 
     private static final Logger LOG = LoggerFactory.getLogger(JdbcProducer.class);
@@ -157,7 +158,7 @@ public class JdbcProducer extends DefaultProducer {
                 getEndpoint().getPrepareStatementStrategy().populateStatement(ps, it, expectedCount);
             }
 
-            LOG.debug("Executing JDBC PreparedStatement: {}", sql);
+            log.info("Executing JDBC PreparedStatement: {}", sql);
 
             boolean stmtExecutionResult = ps.execute();
             if (stmtExecutionResult) {
@@ -326,7 +327,7 @@ public class JdbcProducer extends DefaultProducer {
             // do not close resources as we are in streaming mode
             answer = false;
         } else if (outputType == JdbcOutputType.SelectList) {
-            List<?> list = extractRows(iterator);
+            List<Map<String,Object>> list = extractRows(iterator);
             exchange.getMessage().setHeader(JdbcConstants.JDBC_ROW_COUNT, list.size());
             String s = JSON.toString(list);
             exchange.getMessage().setBody(s);

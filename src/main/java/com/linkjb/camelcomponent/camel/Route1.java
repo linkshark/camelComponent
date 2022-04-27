@@ -28,5 +28,11 @@ public class Route1 extends RouteBuilder {
                 .autoStartup(true).convertBodyTo(String.class, "UTF-8")
                 .to("jdbc:datasource?useHeadersAsParameters=true&statement.maxRows=10&statement.fetchSize=10")
                 .to("log:ss");
+
+
+        from("jetty:http://0.0.0.0:8888/s").id("selfRoute")
+                .autoStartup(true).convertBodyTo(String.class,"UTF-8")
+                .to("sharkjdbc:{\"queryName\":\"father\",\"dataSourceId\":\"datasource\",\"sql\":\"select * from test where id = ${body}\"}")
+                .to("log:ss");
     }
 }
