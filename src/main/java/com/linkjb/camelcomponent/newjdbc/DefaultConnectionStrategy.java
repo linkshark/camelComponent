@@ -14,16 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.linkjb.camelcomponent.jdbc;
+package com.linkjb.camelcomponent.newjdbc;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.SQLException;
 
+public class DefaultConnectionStrategy implements ConnectionStrategy {
 
-public interface ConnectionStrategy {
+    @Override
+    public Connection getConnection(DataSource dataSource) throws SQLException {
+        return dataSource.getConnection();
+    }
 
-    Connection getConnection(DataSource dataSource) throws Exception;
-
-    boolean isConnectionTransactional(Connection connection, DataSource dataSource);
-
+    @Override
+    public boolean isConnectionTransactional(Connection connection, DataSource dataSource) {
+        return false;
+    }
 }

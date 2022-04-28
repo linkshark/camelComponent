@@ -1,8 +1,6 @@
 package com.linkjb.camelcomponent.dto;
 
-import com.linkjb.camelcomponent.jdbc.*;
-import com.linkjb.camelcomponent.newjdbc.NewDefaultJdbcPrepareStatementStrategy;
-import com.linkjb.camelcomponent.newjdbc.NewJdbcPrepareStatementStrategy;
+import com.linkjb.camelcomponent.newjdbc.*;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -22,6 +20,8 @@ import java.util.Map;
 public class JdbcDTO {
     @ApiModelProperty("查询名称")
     private String queryName;
+    @ApiModelProperty("输出格式,只在最外层有效 1 json (默认) 2 xml ")
+    private Integer outPutTypeCode = 1;
     @ApiModelProperty("查询URL")
     //statement特殊处理
     private Map<String, Object> paramter;

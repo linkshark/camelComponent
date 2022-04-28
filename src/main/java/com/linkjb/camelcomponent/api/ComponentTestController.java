@@ -1,7 +1,9 @@
 package com.linkjb.camelcomponent.api;
 
 import com.linkjb.camelcomponent.common.BaseResult;
+import com.linkjb.camelcomponent.dto.JdbcDTO;
 import com.linkjb.camelcomponent.dto.NodeMockDTO;
+import com.linkjb.camelcomponent.service.ComponentTestService;
 import io.swagger.annotations.Api;
 import org.apache.camel.CamelContext;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +20,11 @@ import org.springframework.web.bind.annotation.*;
 public class ComponentTestController {
     final CamelContext camelContext;
 
-    public ComponentTestController(CamelContext camelContext) {
+    final ComponentTestService componentTestService;
+
+    public ComponentTestController(CamelContext camelContext , ComponentTestService componentTestService) {
         this.camelContext = camelContext;
+        this.componentTestService = componentTestService;
     }
 
     @GetMapping("/hello")
@@ -40,6 +45,11 @@ public class ComponentTestController {
         camelContext.getRouteController().stopRoute("test1");
         boolean test1 = camelContext.removeRoute("test1");
         return BaseResult.ok("hello-camel");
+    }
+
+    @PostMapping("/jdbc")
+    public BaseResult testJdbc(@RequestBody JdbcDTO jdbcDTO) throws Exception {
+        return componentTestService.testJdbc(jdbcDTO);
     }
 
 

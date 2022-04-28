@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.linkjb.camelcomponent.jdbc;
+package com.linkjb.camelcomponent.newjdbc;
 
 /**
  * The default {@link } will map row names to lower case names, but use a single upper case letter after

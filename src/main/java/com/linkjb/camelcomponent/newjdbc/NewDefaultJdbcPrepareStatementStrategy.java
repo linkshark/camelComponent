@@ -16,8 +16,6 @@
  */
 package com.linkjb.camelcomponent.newjdbc;
 
-import com.linkjb.camelcomponent.jdbc.JdbcConstants;
-import com.linkjb.camelcomponent.jdbc.JdbcPrepareStatementStrategy;
 import org.apache.camel.Exchange;
 import org.apache.camel.RuntimeExchangeException;
 import org.slf4j.Logger;

@@ -16,8 +16,10 @@
  */
 package com.linkjb.camelcomponent.newjdbc;
 
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.linkjb.camelcomponent.dto.JdbcDTO;
-import com.linkjb.camelcomponent.jdbc.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.Exchange;
 import org.apache.camel.ExtendedExchange;
 import org.apache.camel.spi.Synchronization;
@@ -30,6 +32,7 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
+@Slf4j
 public class NewJdbcProducer extends DefaultProducer {
 
     private static final Logger LOG = LoggerFactory.getLogger(NewJdbcProducer.class);
@@ -152,15 +155,22 @@ public class NewJdbcProducer extends DefaultProducer {
         boolean shouldCloseResources = true;
 
         try {
+            boolean flag;
+            if (jdbcDTO == null) {
+                flag = this.jdbcDTO.isAllowNamedParameters();
+            } else {
+                flag = jdbcDTO.isAllowNamedParameters();
+            }
+            this.jdbcDTO.setPrepareStatementStrategy(new NewDefaultJdbcPrepareStatementStrategy());
             final String preparedQuery
-                    = this.jdbcDTO.getPrepareStatementStrategy().prepareQuery(sql, jdbcDTO == null ?
-                    this.jdbcDTO.isAllowNamedParameters() : jdbcDTO.isAllowNamedParameters());
-
+                    = this.jdbcDTO.getPrepareStatementStrategy().prepareQuery(sql,
+                    flag
+            );
             Boolean shouldRetrieveGeneratedKeys
-                    = exchange.getIn().getHeader(JdbcConstants.JDBC_RETRIEVE_GENERATED_KEYS, false, Boolean.class);
+                    = exchange.getIn().getHeader(NewJdbcConstants.JDBC_RETRIEVE_GENERATED_KEYS, false, Boolean.class);
 
             if (shouldRetrieveGeneratedKeys) {
-                Object expectedGeneratedColumns = exchange.getIn().getHeader(JdbcConstants.JDBC_GENERATED_COLUMNS);
+                Object expectedGeneratedColumns = exchange.getIn().getHeader(NewJdbcConstants.JDBC_GENERATED_COLUMNS);
                 if (expectedGeneratedColumns == null) {
                     ps = conn.prepareStatement(preparedQuery, Statement.RETURN_GENERATED_KEYS);
                 } else if (expectedGeneratedColumns instanceof String[]) {
@@ -177,16 +187,9 @@ public class NewJdbcProducer extends DefaultProducer {
             }
             int expectedCount = ps.getParameterMetaData().getParameterCount();
             if (expectedCount > 0) {
-                Iterator<?> it =
-                        jdbcDTO == null ?
-                                this.jdbcDTO.getPrepareStatementStrategy()
-                                        .createPopulateIterator(sql, preparedQuery, expectedCount, exchange, exchange.getIn().getBody()) : jdbcDTO.getPrepareStatementStrategy()
-                                .createPopulateIterator(sql, preparedQuery, expectedCount, exchange, exchange.getIn().getBody());
-                if (jdbcDTO == null) {
-                    this.jdbcDTO.getPrepareStatementStrategy().populateStatement(ps, it, expectedCount);
-                } else {
-                    jdbcDTO.getPrepareStatementStrategy().populateStatement(ps, it, expectedCount);
-                }
+                Iterator<?> it = this.jdbcDTO.getPrepareStatementStrategy()
+                        .createPopulateIterator(sql, preparedQuery, expectedCount, exchange, exchange.getIn().getBody());
+                this.jdbcDTO.getPrepareStatementStrategy().populateStatement(ps, it, expectedCount);
             }
             LOG.debug("Executing JDBC PreparedStatement: {}", sql);
 
@@ -197,7 +200,7 @@ public class NewJdbcProducer extends DefaultProducer {
             } else {
                 int updateCount = ps.getUpdateCount();
                 // and then set the new header
-                exchange.getMessage().setHeader(JdbcConstants.JDBC_UPDATE_COUNT, updateCount);
+                exchange.getMessage().setHeader(NewJdbcConstants.JDBC_UPDATE_COUNT, updateCount);
             }
 
             if (shouldRetrieveGeneratedKeys) {
@@ -219,7 +222,7 @@ public class NewJdbcProducer extends DefaultProducer {
                 conn, rs, this.jdbcDTO.isUseJDBC4ColumnNameAndLabelSemantics(), this.jdbcDTO.isUseGetBytesForBlob());
 
         JdbcOutputType outputType = this.jdbcDTO.getOutputType();
-        exchange.getMessage().setHeader(JdbcConstants.JDBC_COLUMN_NAMES, iterator.getColumnNames());
+        exchange.getMessage().setHeader(NewJdbcConstants.JDBC_COLUMN_NAMES, iterator.getColumnNames());
         if (outputType == JdbcOutputType.StreamList) {
             exchange.getMessage()
                     .setBody(new StreamListIterator(
@@ -267,11 +270,11 @@ public class NewJdbcProducer extends DefaultProducer {
             LOG.debug("Executing JDBC Statement: {}", sql);
 
             Boolean shouldRetrieveGeneratedKeys
-                    = exchange.getIn().getHeader(JdbcConstants.JDBC_RETRIEVE_GENERATED_KEYS, false, Boolean.class);
+                    = exchange.getIn().getHeader(NewJdbcConstants.JDBC_RETRIEVE_GENERATED_KEYS, false, Boolean.class);
 
             boolean stmtExecutionResult;
             if (shouldRetrieveGeneratedKeys) {
-                Object expectedGeneratedColumns = exchange.getIn().getHeader(JdbcConstants.JDBC_GENERATED_COLUMNS);
+                Object expectedGeneratedColumns = exchange.getIn().getHeader(NewJdbcConstants.JDBC_GENERATED_COLUMNS);
                 if (expectedGeneratedColumns == null) {
                     stmtExecutionResult = stmt.execute(sql, Statement.RETURN_GENERATED_KEYS);
                 } else if (expectedGeneratedColumns instanceof String[]) {
@@ -294,7 +297,7 @@ public class NewJdbcProducer extends DefaultProducer {
             } else {
                 int updateCount = stmt.getUpdateCount();
                 // and then set the new header
-                exchange.getMessage().setHeader(JdbcConstants.JDBC_UPDATE_COUNT, updateCount);
+                exchange.getMessage().setHeader(NewJdbcConstants.JDBC_UPDATE_COUNT, updateCount);
             }
 
             if (shouldRetrieveGeneratedKeys) {
@@ -356,8 +359,8 @@ public class NewJdbcProducer extends DefaultProducer {
     }
 
     /**
-     * Sets the generated if any to the Exchange in headers : - {@link JdbcConstants#JDBC_GENERATED_KEYS_ROW_COUNT} :
-     * the row count of generated keys - {@link JdbcConstants#JDBC_GENERATED_KEYS_DATA} : the generated keys data
+     * Sets the generated if any to the Exchange in headers : - {@link NewJdbcConstants#JDBC_GENERATED_KEYS_ROW_COUNT} :
+     * the row count of generated keys - {@link NewJdbcConstants#JDBC_GENERATED_KEYS_DATA} : the generated keys data
      *
      * @param exchange      The exchange where to store the generated keys
      * @param conn          Current JDBC connection
@@ -370,8 +373,8 @@ public class NewJdbcProducer extends DefaultProducer {
                     getEndpoint().isUseGetBytesForBlob());
             List<Map<String, Object>> data = extractRows(iterator);
 
-            exchange.getMessage().setHeader(JdbcConstants.JDBC_GENERATED_KEYS_ROW_COUNT, data.size());
-            exchange.getMessage().setHeader(JdbcConstants.JDBC_GENERATED_KEYS_DATA, data);
+            exchange.getMessage().setHeader(NewJdbcConstants.JDBC_GENERATED_KEYS_ROW_COUNT, data.size());
+            exchange.getMessage().setHeader(NewJdbcConstants.JDBC_GENERATED_KEYS_DATA, data);
         }
     }
 
@@ -387,7 +390,7 @@ public class NewJdbcProducer extends DefaultProducer {
                 conn, rs, this.jdbcDTO.isUseJDBC4ColumnNameAndLabelSemantics(), this.jdbcDTO.isUseGetBytesForBlob());
 
         JdbcOutputType outputType = this.jdbcDTO.getOutputType();
-        exchange.getMessage().setHeader(JdbcConstants.JDBC_COLUMN_NAMES, iterator.getColumnNames());
+        exchange.getMessage().setHeader(NewJdbcConstants.JDBC_COLUMN_NAMES, iterator.getColumnNames());
         if (outputType == JdbcOutputType.StreamList) {
             exchange.getMessage()
                     .setBody(new StreamListIterator(
@@ -404,36 +407,36 @@ public class NewJdbcProducer extends DefaultProducer {
                 resultMap.put(this.jdbcDTO.getQueryName(), list);
                 if (this.jdbcDTO.getChild() != null && this.jdbcDTO.getChild().size() > 0) {
                     for (Map<String, Object> map : list) {
-                        exchange.getMessage().setHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, map);
-                        exchange.getMessage().setBody(map);
-                        this.process(exchange, this.jdbcDTO.getChild().get(0));
-                        map.put(this.jdbcDTO.getChild().get(0).getQueryName(), exchange.getMessage().getBody());
-//                    for(JdbcDTO sonJdbcDTO: this.jdbcDTO.getChild()){
-//                        exchange.getMessage().setHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, map);
-//                        exchange.getMessage().setBody(map);
-//                        this.process(exchange,sonJdbcDTO);
-//                        map.put(sonJdbcDTO.getQueryName(),exchange.getMessage().getBody());
-//                    }
+                        for (JdbcDTO sonJdbcDTO : this.jdbcDTO.getChild()) {
+                            exchange.getMessage().setHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, map);
+                            exchange.getMessage().setBody(map);
+                            this.process(exchange, sonJdbcDTO);
+                            map.put(sonJdbcDTO.getQueryName(), exchange.getMessage().getBody());
+                        }
 
                     }
                 }
-                exchange.getMessage().setBody(com.alibaba.fastjson.JSON.toJSONString(resultMap));
+                if(this.jdbcDTO.getOutPutTypeCode().equals(1)){
+                    exchange.getMessage().setBody(com.alibaba.fastjson.JSON.toJSONString(resultMap));
+                }else if(this.jdbcDTO.getOutPutTypeCode().equals(2)){
+                    JSONObject obj = JSONUtil.createObj();
+                    obj.putAll(resultMap);
+                    String s = JSONUtil.toXmlStr(obj);
+                    exchange.getMessage().setBody(s);
+                }else{
+                    exchange.getMessage().setBody(com.alibaba.fastjson.JSON.toJSONString(resultMap));
+                }
             } else {
                 List<Map<String, Object>> list = extractRows(iterator);
                 exchange.getMessage().setHeader(NewJdbcConstants.JDBC_ROW_COUNT, list.size());
-                //Map<String,Object> resultMap = new HashMap<>();
-                //resultMap.put(this.jdbcDTO.getQueryName(),list);
-                if (jdbcDTO.getChild() != null && this.jdbcDTO.getChild().size() > 0) {
+                if (jdbcDTO.getChild() != null && jdbcDTO.getChild().size() > 0) {
                     for (Map<String, Object> map : list) {
-                        exchange.getMessage().setHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, map);
-                        exchange.getMessage().setBody(map);
-                        this.process(exchange, jdbcDTO.getChild().get(0));
-//                    for(JdbcDTO sonJdbcDTO: this.jdbcDTO.getChild()){
-//                        exchange.getMessage().setHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, map);
-//                        exchange.getMessage().setBody(map);
-//                        this.process(exchange,sonJdbcDTO);
-//                        map.put(sonJdbcDTO.getQueryName(),exchange.getMessage().getBody());
-//                    }
+                        for (JdbcDTO sonJdbcDTO : jdbcDTO.getChild()) {
+                            exchange.getMessage().setHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, map);
+                            exchange.getMessage().setBody(map);
+                            this.process(exchange, sonJdbcDTO);
+                            map.put(sonJdbcDTO.getQueryName(), exchange.getMessage().getBody());
+                        }
 
                     }
                 }

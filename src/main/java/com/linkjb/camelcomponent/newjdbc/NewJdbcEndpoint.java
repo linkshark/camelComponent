@@ -17,12 +17,8 @@
 package com.linkjb.camelcomponent.newjdbc;
 
 import com.linkjb.camelcomponent.dto.JdbcDTO;
-import com.linkjb.camelcomponent.jdbc.*;
 import org.apache.camel.*;
 import org.apache.camel.spi.Metadata;
-import org.apache.camel.spi.UriEndpoint;
-import org.apache.camel.spi.UriParam;
-import org.apache.camel.spi.UriPath;
 import org.apache.camel.support.DefaultEndpoint;
 
 import javax.sql.DataSource;

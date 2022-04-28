@@ -2,7 +2,6 @@ package com.linkjb.camelcomponent.newjdbc;
 
 import com.alibaba.fastjson.JSON;
 import com.linkjb.camelcomponent.dto.JdbcDTO;
-import com.linkjb.camelcomponent.jdbc.ConnectionStrategy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Endpoint;
@@ -15,7 +14,6 @@ import org.apache.camel.util.PropertiesHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.sql.DataSource;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -100,7 +98,8 @@ public class NewJdbcComponent extends DefaultComponent {
                 if (target == null) {
                     throw new IllegalArgumentException("No default DataSource found in the registry");
                 }
-                log.info("从camelContext中获取数据源: {}", target);
+            }else{
+                jdbcDTO.setDataSource(target);
             }
             if (jdbcDTO.getChild() != null && jdbcDTO.getChild().size() > 0) {
                 for (JdbcDTO sonDto : jdbcDTO.getChild()) {

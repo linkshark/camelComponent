@@ -14,10 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.linkjb.camelcomponent.jdbc;
+package com.linkjb.camelcomponent.newjdbc;
 
-public enum JdbcOutputType {
-    SelectOne,
-    SelectList,
-    StreamList
+/**
+ * A mapper to map row names to java bean setter names, when using the <tt>outputClass</tt> option.
+ */
+public interface BeanRowMapper {
+
+    String map(String row, Object value);
 }
