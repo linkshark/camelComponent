@@ -6,6 +6,7 @@ package com.linkjb.camelcomponent.conf;
  * @Author shark
  * @Data 2022/2/15 17:01
  */
+
 import com.alibaba.druid.pool.DruidDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,14 +26,14 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 public class SwaggerConfig implements WebMvcConfigurer {
 
     @Bean
-    public Docket createRestApi(){
+    public Docket createRestApi() {
         return new Docket(DocumentationType.SWAGGER_2).apiInfo(apiInfo())
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("com.linkjb.camelcomponent.api"))
                 .paths(PathSelectors.any()).build();
     }
 
-    private ApiInfo apiInfo(){
+    private ApiInfo apiInfo() {
         return new ApiInfoBuilder()
                 .title("Kitty API Doc")
                 .description("This is a restful api document of Kitty.")

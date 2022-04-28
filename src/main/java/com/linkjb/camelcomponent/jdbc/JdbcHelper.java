@@ -53,7 +53,7 @@ public final class JdbcHelper {
         if (!properties.isEmpty()) {
             throw new IllegalArgumentException(
                     "Cannot map all properties to bean of type " + outputClass + ". There are " + properties.size()
-                                               + " unmapped properties. " + properties);
+                            + " unmapped properties. " + properties);
         }
         return answer;
     }

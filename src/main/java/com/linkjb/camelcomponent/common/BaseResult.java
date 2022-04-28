@@ -27,13 +27,14 @@ public class BaseResult {
     //存放数据
     private Object data;
     //其他数据
-    private final Map<String,Object> other = new HashMap<>();
+    private final Map<String, Object> other = new HashMap<>();
 
 
     public BaseResult(Integer code, String message) {
         this.code = code;
         this.message = message;
     }
+
     public BaseResult(Integer code, String message, Object data) {
         this.code = code;
         this.message = message;
@@ -43,26 +44,26 @@ public class BaseResult {
     /**
      * 快捷成功BaseResult对象
      */
-    public static BaseResult ok(String message){
-        return new BaseResult(BaseResult.OK , message);
+    public static BaseResult ok(String message) {
+        return new BaseResult(BaseResult.OK, message);
     }
 
-    public static BaseResult ok(String message, Object data){
-        return new BaseResult(BaseResult.OK , message, data );
+    public static BaseResult ok(String message, Object data) {
+        return new BaseResult(BaseResult.OK, message, data);
     }
 
     /**
      * 快捷失败BaseResult对象
      */
-    public static BaseResult error(String message){
-        return new BaseResult(BaseResult.ERROR , message);
+    public static BaseResult error(String message) {
+        return new BaseResult(BaseResult.ERROR, message);
     }
 
     /**
      * 自定义数据区域
      */
-    public BaseResult append(String key , Object msg){
-        other.put(key , msg);
+    public BaseResult append(String key, Object msg) {
+        other.put(key, msg);
         return this;
     }
 }

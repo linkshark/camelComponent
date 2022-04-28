@@ -30,22 +30,22 @@ public interface NewJdbcPrepareStatementStrategy {
     /**
      * Prepares the query to be executed.
      *
-     * @param  query                the query which may contain named query parameters
-     * @param  allowNamedParameters whether named parameters is allowed
-     * @return                      the query to actually use, which must be accepted by the JDBC driver.
+     * @param query                the query which may contain named query parameters
+     * @param allowNamedParameters whether named parameters is allowed
+     * @return the query to actually use, which must be accepted by the JDBC driver.
      */
     String prepareQuery(String query, boolean allowNamedParameters) throws SQLException;
 
     /**
      * Creates the iterator to use when setting query parameters on the prepared statement.
      *
-     * @param  query          the original query which may contain named parameters
-     * @param  preparedQuery  the query to actually use, which must be accepted by the JDBC driver.
-     * @param  expectedParams number of expected parameters
-     * @param  exchange       the current exchange
-     * @param  value          the message body that contains the data for the query parameters
-     * @return                the iterator
-     * @throws SQLException   is thrown if error creating the iterator
+     * @param query          the original query which may contain named parameters
+     * @param preparedQuery  the query to actually use, which must be accepted by the JDBC driver.
+     * @param expectedParams number of expected parameters
+     * @param exchange       the current exchange
+     * @param value          the message body that contains the data for the query parameters
+     * @return the iterator
+     * @throws SQLException is thrown if error creating the iterator
      */
     Iterator<?> createPopulateIterator(String query, String preparedQuery, int expectedParams, Exchange exchange, Object value)
             throws SQLException;
@@ -53,10 +53,10 @@ public interface NewJdbcPrepareStatementStrategy {
     /**
      * Populates the query parameters on the prepared statement
      *
-     * @param  ps             the prepared statement
-     * @param  iterator       the iterator to use for getting the parameter data
-     * @param  expectedParams number of expected parameters
-     * @throws SQLException   is thrown if error populating parameters
+     * @param ps             the prepared statement
+     * @param iterator       the iterator to use for getting the parameter data
+     * @param expectedParams number of expected parameters
+     * @throws SQLException is thrown if error populating parameters
      */
     void populateStatement(PreparedStatement ps, Iterator<?> iterator, int expectedParams) throws SQLException;
 

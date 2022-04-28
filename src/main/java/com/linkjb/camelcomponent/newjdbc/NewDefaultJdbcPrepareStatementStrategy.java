@@ -42,10 +42,10 @@ public class NewDefaultJdbcPrepareStatementStrategy implements NewJdbcPrepareSta
     @Override
     public String prepareQuery(String query, boolean allowNamedParameters) throws SQLException {
         String answer;
-            if (allowNamedParameters && hasNamedParameters(query)) {
+        if (allowNamedParameters && hasNamedParameters(query)) {
             // replace all :?word with just ?
             //answer = query.replaceAll("\\:\\?\\w+", "\\?");
-                answer = query.replaceAll("\\$\\{.*\\}","\\?");
+            answer = query.replaceAll("\\$\\{.*\\}", "\\?");
         } else {
             answer = query;
         }
@@ -60,7 +60,7 @@ public class NewDefaultJdbcPrepareStatementStrategy implements NewJdbcPrepareSta
             final Exchange exchange, final Object value)
             throws SQLException {
         Map<?, ?> map = null;
-        Map<?,?> parMap = null;
+        Map<?, ?> parMap = null;
         Object body = null;
         if (exchange.getIn().hasHeaders()) {
             if (exchange.getIn().getHeader(NewJdbcConstants.JDBC_PARAMETERS) != null) {
@@ -73,7 +73,7 @@ public class NewDefaultJdbcPrepareStatementStrategy implements NewJdbcPrepareSta
             if (exchange.getIn().getHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS) != null) {
                 // header JDBC_PARAMETERS takes precedence over regular headers
                 parMap = exchange.getIn().getHeader(NewJdbcConstants.JDBC_PARENT_PARAMETERS, Map.class);
-            }else{
+            } else {
                 parMap = new HashMap<>();
             }
         }
@@ -112,10 +112,10 @@ public class NewDefaultJdbcPrepareStatementStrategy implements NewJdbcPrepareSta
                             }
                             // the key is expected to exist, if not report so end user can see this
                             key = getContentInfo(key);
-                            if(key.contains(".")){
+                            if (key.contains(".")) {
                                 String[] split = key.split("\\.");
-                                if(split[0].equals("header")){
-                                    key = split[split.length-1];
+                                if (split[0].equals("header")) {
+                                    key = split[split.length - 1];
                                     boolean contains = headerMap != null && headerMap.containsKey(key);
                                     if (!contains) {
                                         throw new RuntimeExchangeException(
@@ -124,8 +124,8 @@ public class NewDefaultJdbcPrepareStatementStrategy implements NewJdbcPrepareSta
                                                 exchange);
                                     }
                                     next = headerMap.get(key);
-                                }else if(split[0].equals("parent")){
-                                    key = split[split.length-1];
+                                } else if (split[0].equals("parent")) {
+                                    key = split[split.length - 1];
                                     boolean contains = parentMap != null && parentMap.containsKey(key);
                                     if (!contains) {
                                         throw new RuntimeExchangeException(
@@ -135,7 +135,7 @@ public class NewDefaultJdbcPrepareStatementStrategy implements NewJdbcPrepareSta
                                     }
                                     next = parentMap.get(key);
                                 }
-                            }else{
+                            } else {
                                 next = finalBody.toString();
                             }
                         }
@@ -158,12 +158,13 @@ public class NewDefaultJdbcPrepareStatementStrategy implements NewJdbcPrepareSta
                     headerMap != null ? headerMap.values() : null);
         }
     }
-    public  String getContentInfo(String content) {
+
+    public String getContentInfo(String content) {
         Pattern regex = Pattern.compile("\\$\\{([^}]*)\\}");
         Matcher matcher = regex.matcher(content);
         StringBuilder sql = new StringBuilder();
-        while(matcher.find()) {
-            sql.append(matcher.group(1)+",");
+        while (matcher.find()) {
+            sql.append(matcher.group(1) + ",");
         }
         if (sql.length() > 0) {
             sql.deleteCharAt(sql.length() - 1);

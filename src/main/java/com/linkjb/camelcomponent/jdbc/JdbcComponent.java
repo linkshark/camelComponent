@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 /*
-*
+ *
  * @Author shark
  * @Description //自研JDBC组件,在camel-jdbc组件原有基础上改造
  * @Date 2022/4/21

@@ -1,7 +1,8 @@
 package com.linkjb.camelcomponent.groovy
 
 
-def k(){
+def k() {
     return new Date();
 }
+
 print(k())

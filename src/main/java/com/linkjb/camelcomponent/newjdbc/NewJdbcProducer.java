@@ -23,7 +23,6 @@ import org.apache.camel.ExtendedExchange;
 import org.apache.camel.spi.Synchronization;
 import org.apache.camel.support.DefaultProducer;
 import org.apache.camel.support.PropertyBindingSupport;
-import org.eclipse.jetty.util.ajax.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +42,7 @@ public class NewJdbcProducer extends DefaultProducer {
     private final JdbcDTO jdbcDTO;
 
     public NewJdbcProducer(NewJdbcEndpoint endpoint, DataSource dataSource, ConnectionStrategy connectionStrategy,
-                           int readSize, Map<String, Object> parameters,JdbcDTO jdbcDTO) throws Exception {
+                           int readSize, Map<String, Object> parameters, JdbcDTO jdbcDTO) throws Exception {
         super(endpoint);
         this.dataSource = dataSource;
         this.connectionStrategy = connectionStrategy;
@@ -63,27 +62,26 @@ public class NewJdbcProducer extends DefaultProducer {
     @Override
     public void process(Exchange exchange) throws Exception {
         //if (getEndpoint().isResetAutoCommit()) {
-            processingSqlBySettingAutoCommit(exchange,null);
+        processingSqlBySettingAutoCommit(exchange, null);
         //} else {
-            //processingSqlWithoutSettingAutoCommit(exchange);
+        //processingSqlWithoutSettingAutoCommit(exchange);
         //}
     }
 
-    public void process(Exchange exchange,JdbcDTO jdbcDTO) throws Exception {
+    public void process(Exchange exchange, JdbcDTO jdbcDTO) throws Exception {
         //if (getEndpoint().isResetAutoCommit()) {
-        processingSqlBySettingAutoCommit(exchange,jdbcDTO);
+        processingSqlBySettingAutoCommit(exchange, jdbcDTO);
         //} else {
         //processingSqlWithoutSettingAutoCommit(exchange);
         //}
     }
 
 
-
     private void processingSqlBySettingAutoCommit(Exchange exchange, JdbcDTO jdbcDTO) throws Exception {
         String sql;
-        if(jdbcDTO==null){
-             sql  = this.jdbcDTO.getSql();
-        }else{
+        if (jdbcDTO == null) {
+            sql = this.jdbcDTO.getSql();
+        } else {
             sql = jdbcDTO.getSql();
         }
         //String sql = exchange.getIn().getBody(String.class);
@@ -92,13 +90,13 @@ public class NewJdbcProducer extends DefaultProducer {
         boolean shouldCloseResources = true;
 
         try {
-            conn = connectionStrategy.getConnection(jdbcDTO==null?this.jdbcDTO.getDataSource(): jdbcDTO.getDataSource());
+            conn = connectionStrategy.getConnection(jdbcDTO == null ? this.jdbcDTO.getDataSource() : jdbcDTO.getDataSource());
             autoCommit = conn.getAutoCommit();
             if (autoCommit) {
                 conn.setAutoCommit(false);
             }
 
-            shouldCloseResources = createAndExecuteSqlStatement(exchange, sql, conn,jdbcDTO);
+            shouldCloseResources = createAndExecuteSqlStatement(exchange, sql, conn, jdbcDTO);
 
             conn.commit();
         } catch (Exception e) {
@@ -134,12 +132,13 @@ public class NewJdbcProducer extends DefaultProducer {
     }
 
     private boolean createAndExecuteSqlStatement(Exchange exchange, String sql, Connection conn, JdbcDTO jdbcDTO) throws Exception {
-        if (jdbcDTO==null?this.jdbcDTO.isUseHeadersAsParameters():jdbcDTO.isUseHeadersAsParameters()) {
-            return doCreateAndExecuteSqlStatementWithHeadersAndBody(exchange, sql, conn,jdbcDTO);
+        if (jdbcDTO == null ? this.jdbcDTO.isUseHeadersAsParameters() : jdbcDTO.isUseHeadersAsParameters()) {
+            return doCreateAndExecuteSqlStatementWithHeadersAndBody(exchange, sql, conn, jdbcDTO);
         } else {
-            return doCreateAndExecuteSqlStatement(exchange, sql, conn,jdbcDTO);
+            return doCreateAndExecuteSqlStatement(exchange, sql, conn, jdbcDTO);
         }
     }
+
     /*
      * @Author shark
      * @Description //使用头或体来替换
@@ -171,20 +170,24 @@ public class NewJdbcProducer extends DefaultProducer {
                 } else {
                     throw new IllegalArgumentException(
                             "Header specifying expected returning columns isn't an instance of String[] or int[] but "
-                                                       + expectedGeneratedColumns.getClass());
+                                    + expectedGeneratedColumns.getClass());
                 }
             } else {
                 ps = conn.prepareStatement(preparedQuery);
             }
-
             int expectedCount = ps.getParameterMetaData().getParameterCount();
-
             if (expectedCount > 0) {
-                Iterator<?> it = this.jdbcDTO.getPrepareStatementStrategy()
-                        .createPopulateIterator(sql, preparedQuery, expectedCount, exchange, exchange.getIn().getBody());
-                this.jdbcDTO.getPrepareStatementStrategy().populateStatement(ps, it, expectedCount);
+                Iterator<?> it =
+                        jdbcDTO == null ?
+                                this.jdbcDTO.getPrepareStatementStrategy()
+                                        .createPopulateIterator(sql, preparedQuery, expectedCount, exchange, exchange.getIn().getBody()) : jdbcDTO.getPrepareStatementStrategy()
+                                .createPopulateIterator(sql, preparedQuery, expectedCount, exchange, exchange.getIn().getBody());
+                if (jdbcDTO == null) {
+                    this.jdbcDTO.getPrepareStatementStrategy().populateStatement(ps, it, expectedCount);
+                } else {
+                    jdbcDTO.getPrepareStatementStrategy().populateStatement(ps, it, expectedCount);
+                }
             }
-
             LOG.debug("Executing JDBC PreparedStatement: {}", sql);
 
             boolean stmtExecutionResult = ps.execute();
@@ -229,7 +232,6 @@ public class NewJdbcProducer extends DefaultProducer {
 
             List<Map<String, Object>> list = extractRows(iterator);
             exchange.getMessage().setHeader(NewJdbcConstants.JDBC_ROW_COUNT, list.size());
-            //// TODO: 2022/4/26  开始递归循环子查询
             Map<String, Object> resultMap = new HashMap<>();
             resultMap.put(this.jdbcDTO.getQueryName(), list);
             if (this.jdbcDTO.getChild() != null && this.jdbcDTO.getChild().size() > 0) {
@@ -279,7 +281,7 @@ public class NewJdbcProducer extends DefaultProducer {
                 } else {
                     throw new IllegalArgumentException(
                             "Header specifying expected returning columns isn't an instance of String[] or int[] but "
-                                                       + expectedGeneratedColumns.getClass());
+                                    + expectedGeneratedColumns.getClass());
                 }
             } else {
                 stmtExecutionResult = stmt.execute(sql);
@@ -287,6 +289,7 @@ public class NewJdbcProducer extends DefaultProducer {
 
             if (stmtExecutionResult) {
                 rs = stmt.getResultSet();
+                //todo
                 shouldCloseResources = setResultSet(exchange, conn, rs, jdbcDTO);
             } else {
                 int updateCount = stmt.getUpdateCount();
@@ -397,7 +400,6 @@ public class NewJdbcProducer extends DefaultProducer {
             if (jdbcDTO == null) {
                 List<Map<String, Object>> list = extractRows(iterator);
                 exchange.getMessage().setHeader(NewJdbcConstants.JDBC_ROW_COUNT, list.size());
-                //// TODO: 2022/4/26  开始递归循环子查询
                 Map<String, Object> resultMap = new HashMap<>();
                 resultMap.put(this.jdbcDTO.getQueryName(), list);
                 if (this.jdbcDTO.getChild() != null && this.jdbcDTO.getChild().size() > 0) {
@@ -419,7 +421,6 @@ public class NewJdbcProducer extends DefaultProducer {
             } else {
                 List<Map<String, Object>> list = extractRows(iterator);
                 exchange.getMessage().setHeader(NewJdbcConstants.JDBC_ROW_COUNT, list.size());
-                //// TODO: 2022/4/26  开始递归循环子查询
                 //Map<String,Object> resultMap = new HashMap<>();
                 //resultMap.put(this.jdbcDTO.getQueryName(),list);
                 if (jdbcDTO.getChild() != null && this.jdbcDTO.getChild().size() > 0) {

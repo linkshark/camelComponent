@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
+
 @Slf4j
 public class JdbcProducer extends DefaultProducer {
 
@@ -144,7 +145,7 @@ public class JdbcProducer extends DefaultProducer {
                 } else {
                     throw new IllegalArgumentException(
                             "Header specifying expected returning columns isn't an instance of String[] or int[] but "
-                                                       + expectedGeneratedColumns.getClass());
+                                    + expectedGeneratedColumns.getClass());
                 }
             } else {
                 ps = conn.prepareStatement(preparedQuery);
@@ -212,7 +213,7 @@ public class JdbcProducer extends DefaultProducer {
                 } else {
                     throw new IllegalArgumentException(
                             "Header specifying expected returning columns isn't an instance of String[] or int[] but "
-                                                       + expectedGeneratedColumns.getClass());
+                                    + expectedGeneratedColumns.getClass());
                 }
             } else {
                 stmtExecutionResult = stmt.execute(sql);
@@ -327,7 +328,7 @@ public class JdbcProducer extends DefaultProducer {
             // do not close resources as we are in streaming mode
             answer = false;
         } else if (outputType == JdbcOutputType.SelectList) {
-            List<Map<String,Object>> list = extractRows(iterator);
+            List<Map<String, Object>> list = extractRows(iterator);
             exchange.getMessage().setHeader(JdbcConstants.JDBC_ROW_COUNT, list.size());
             String s = JSON.toString(list);
             exchange.getMessage().setBody(s);

@@ -3,7 +3,6 @@ package com.linkjb.camelcomponent.newjdbc;
 import com.alibaba.fastjson.JSON;
 import com.linkjb.camelcomponent.dto.JdbcDTO;
 import com.linkjb.camelcomponent.jdbc.ConnectionStrategy;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Endpoint;
@@ -34,8 +33,6 @@ public class NewJdbcComponent extends DefaultComponent {
     CamelContextHelper camelContextHelper;
     @Autowired
     CamelContext camelContext;
-    @Metadata
-    private Set<DataSource> dataSources;
     @Metadata(label = "advanced")
     private ConnectionStrategy connectionStrategy;
 
@@ -46,36 +43,22 @@ public class NewJdbcComponent extends DefaultComponent {
     @Override
     protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
         JdbcDTO jdbcDTO = null;
-        Set<DataSource> dataSources;
-        String dataSourceRef;
-        if (this.dataSources != null) {
-            // prefer to use datasources set by setter
-            dataSources = this.dataSources;
-            dataSourceRef = "component";
-        }else{
-            if(remaining==null){
-                throw new IllegalArgumentException("使用sharkJdbc组件必须使用param参数封装jdbcDto");
-            }else{
-                //String param = parameters.get("param").toString();
-                jdbcDTO = JSON.parseObject(remaining, JdbcDTO.class);
-                Set<DataSource> set = new HashSet<>();
-                getDataSourceSet(jdbcDTO,set);
-                this.dataSources = set;
-            }
+        if (remaining == null) {
+            throw new IllegalArgumentException("使用sharkJdbc组件必须使用封装jdbcDto");
+        } else {
+            jdbcDTO = JSON.parseObject(remaining, JdbcDTO.class);
+            getDataSourceSet(jdbcDTO);
         }
 
         NewJdbcEndpoint jdbc = createEndpoint(uri, this, jdbcDTO);
         if (connectionStrategy != null) {
             jdbc.setConnectionStrategy(connectionStrategy);
         }
-
         return jdbc;
-        //return null;
-
     }
 
     /*
-    *
+     *
      * @Author shark
      * @Description //创建EndPoint
      * @Date 2022/4/25
@@ -85,24 +68,25 @@ public class NewJdbcComponent extends DefaultComponent {
     protected NewJdbcEndpoint createEndpoint(String uri, NewJdbcComponent component, JdbcDTO jdbcDTO) {
         return new NewJdbcEndpoint(uri, component, jdbcDTO);
     }
+
     /*
-    *
+     *
      * @Author shark
-     * @Description //递归获取Datasource并set到Dto中
+     * @Description //递归获取Datasource
      * @Date 2022/4/25
      * @Param [jdbcDTO, set]
      * @return void
      **/
-    private void getDataSourceSet(JdbcDTO jdbcDTO , Set<DataSource> set){
+    private void getDataSourceSet(JdbcDTO jdbcDTO) {
         //url.split(":")
         String dataSourceId = jdbcDTO.getDataSourceId();
-        if(dataSourceId == null){
+        if (dataSourceId == null) {
             throw new IllegalArgumentException("dataSourceId不可为空,请检查参数");
-        }else{
+        } else {
             DataSource target = CamelContextHelper.lookup(getCamelContext(), dataSourceId, DataSource.class);
             if (target == null && !isDefaultDataSourceName(dataSourceId)) {
                 throw new NoSuchBeanException(dataSourceId, DataSource.class.getName());
-            }else if (target == null) {
+            } else if (target == null) {
                 // check if the registry contains a single instance of DataSource
                 Set<DataSource> dataSources = getCamelContext().getRegistry().findByType(DataSource.class);
                 if (dataSources.size() > 1) {
@@ -110,18 +94,17 @@ public class NewJdbcComponent extends DefaultComponent {
                             "Multiple DataSources found in the registry and no explicit configuration provided");
                 } else if (dataSources.size() == 1) {
                     target = dataSources.iterator().next();
-                    set.add(target);
                     jdbcDTO.setDataSource(target);
                     jdbcDTO.setParamter(PropertiesHelper.extractProperties(jdbcDTO.getParamter(), "statement."));
                 }
                 if (target == null) {
                     throw new IllegalArgumentException("No default DataSource found in the registry");
                 }
-                log.debug("从camelContext中获取数据源: {}", target);
+                log.info("从camelContext中获取数据源: {}", target);
             }
-            if(jdbcDTO.getChild()!=null&&jdbcDTO.getChild().size()>0){
-                for(JdbcDTO sonDto:jdbcDTO.getChild()){
-                    getDataSourceSet(sonDto,set);
+            if (jdbcDTO.getChild() != null && jdbcDTO.getChild().size() > 0) {
+                for (JdbcDTO sonDto : jdbcDTO.getChild()) {
+                    getDataSourceSet(sonDto);
                 }
             }
         }

@@ -76,6 +76,7 @@ public class NewJdbcEndpoint extends DefaultEndpoint {
         super(endpointUri, component);
         this.dataSource = dataSource;
     }
+
     public NewJdbcEndpoint(String endpointUri, Component component, JdbcDTO jdbcDTO) {
         super(endpointUri, component);
         this.jdbcDTO = jdbcDTO;
@@ -83,12 +84,12 @@ public class NewJdbcEndpoint extends DefaultEndpoint {
 
     @Override
     public Consumer createConsumer(Processor processor) throws Exception {
-        throw new UnsupportedOperationException("Not supported");
+        throw new UnsupportedOperationException("sharkjdbc组件不支持作为consumer使用");
     }
 
     @Override
     public Producer createProducer() throws Exception {
-        return new NewJdbcProducer(this, dataSource, connectionStrategy, readSize, parameters,jdbcDTO);
+        return new NewJdbcProducer(this, dataSource, connectionStrategy, readSize, parameters, jdbcDTO);
     }
 
     public String getDataSourceName() {
@@ -271,7 +272,7 @@ public class NewJdbcEndpoint extends DefaultEndpoint {
 
     /**
      * To use a custom strategy for working with connections.
-     *
+     * <p>
      * Do not use a custom strategy when using the spring-jdbc component because a special Spring ConnectionStrategy is
      * used by default to support Spring Transactions.
      */

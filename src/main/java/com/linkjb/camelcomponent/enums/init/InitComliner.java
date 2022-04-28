@@ -24,11 +24,10 @@ public class InitComliner implements InitializingBean {
     }
 
 
-
     @Override
     public void afterPropertiesSet() throws Exception {
-        camelContext.addComponent("jdbc",new JdbcComponent());
-        camelContext.addComponent("sharkjdbc",new NewJdbcComponent());
+        camelContext.addComponent("jdbc", new JdbcComponent());
+        camelContext.addComponent("sharkjdbc", new NewJdbcComponent());
         camelContext.setAutoStartup(true);
     }
 }

@@ -30,7 +30,7 @@ import java.util.Map;
  * Access databases through SQL and JDBC.
  */
 @UriEndpoint(firstVersion = "1.2.0", scheme = "jdbc", title = "JDBC", syntax = "jdbc:dataSourceName", producerOnly = true,
-             category = { Category.DATABASE, Category.SQL })
+        category = {Category.DATABASE, Category.SQL})
 public class JdbcEndpoint extends DefaultEndpoint {
 
     private DataSource dataSource;
@@ -267,7 +267,7 @@ public class JdbcEndpoint extends DefaultEndpoint {
 
     /**
      * To use a custom strategy for working with connections.
-     *
+     * <p>
      * Do not use a custom strategy when using the spring-jdbc component because a special Spring ConnectionStrategy is
      * used by default to support Spring Transactions.
      */
