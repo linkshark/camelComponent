@@ -27,14 +27,21 @@ public class ComponentTestServiceImpl implements ComponentTestService {
     public BaseResult testJdbc(JdbcDTO jdbcDTO) throws Exception {
         Component newJdbc = camelContext.getComponent("sharkjdbc");
         //generateDto(jdbcDTO);
-        NewJdbcEndpoint endpoint = (NewJdbcEndpoint)newJdbc.createEndpoint("sharkJdbc:" + JSON.toJSONString(jdbcDTO));
-        NewJdbcProducer producer = (NewJdbcProducer)endpoint.createProducer();
+        NewJdbcEndpoint endpoint = (NewJdbcEndpoint) newJdbc.createEndpoint("sharkJdbc:" + JSON.toJSONString(jdbcDTO));
+        NewJdbcProducer producer = (NewJdbcProducer) endpoint.createProducer();
         Exchange exchange = new DefaultExchange(camelContext);
         producer.process(exchange);
         return BaseResult.ok(exchange.getMessage().getBody().toString());
     }
 
-    public void generateDto(JdbcDTO jdbcDTO){
+    @Override
+    public BaseResult testSplit(String body) {
+
+
+        return null;
+    }
+
+    public void generateDto(JdbcDTO jdbcDTO) {
         NewDefaultJdbcPrepareStatementStrategy newDefaultJdbcPrepareStatementStrategy = new NewDefaultJdbcPrepareStatementStrategy();
         BeanRowMapper beanRowMapper = new DefaultBeanRowMapper();
         ConnectionStrategy connectionStrategy = new DefaultConnectionStrategy();

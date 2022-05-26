@@ -1,5 +1,6 @@
 package com.linkjb.camelcomponent.enums.init;
 
+import com.linkjb.camelcomponent.jdbc.JdbcComponent;
 import com.linkjb.camelcomponent.newjdbc.NewJdbcComponent;
 import groovy.util.logging.Slf4j;
 import org.apache.camel.CamelContext;
@@ -24,7 +25,7 @@ public class InitComliner implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        //camelContext.addComponent("jdbc", new JdbcComponent());
+        camelContext.addComponent("jdbc", new JdbcComponent());
         camelContext.addComponent("sharkjdbc", new NewJdbcComponent());
         camelContext.setAutoStartup(true);
     }

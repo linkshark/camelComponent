@@ -5,4 +5,6 @@ import com.linkjb.camelcomponent.dto.JdbcDTO;
 
 public interface ComponentTestService {
     BaseResult testJdbc(JdbcDTO jdbcDTO) throws Exception;
+
+    BaseResult testSplit(String body);
 }

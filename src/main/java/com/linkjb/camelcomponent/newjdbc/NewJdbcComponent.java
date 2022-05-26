@@ -93,7 +93,7 @@ public class NewJdbcComponent extends DefaultComponent {
                 } else if (dataSources.size() == 1) {
                     target = dataSources.iterator().next();
                     jdbcDTO.setDataSource(target);
-                    jdbcDTO.setParamter(PropertiesHelper.extractProperties(jdbcDTO.getParamter(), "statement."));
+                    jdbcDTO.setParameters(PropertiesHelper.extractProperties(jdbcDTO.getParameters(), "statement."));
                 }
                 if (target == null) {
                     throw new IllegalArgumentException("No default DataSource found in the registry");

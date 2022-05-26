@@ -22,9 +22,9 @@ public class JdbcDTO {
     private String queryName;
     @ApiModelProperty("输出格式,只在最外层有效 1 json (默认) 2 xml ")
     private Integer outPutTypeCode = 1;
-    @ApiModelProperty("查询URL")
+    //@ApiModelProperty("查询URL")
     //statement特殊处理
-    private Map<String, Object> paramter;
+    //private Map<String, Object> paramter;
     @ApiModelProperty("数据源ID")
     private String dataSourceId;
     @ApiModelProperty("sql语句")
