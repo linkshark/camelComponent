@@ -34,7 +34,6 @@ public class Route1 extends RouteBuilder {
         from("jetty:http://0.0.0.0:8888/s").id("selfRoute")
                 .autoStartup(true).convertBodyTo(String.class, "UTF-8")
                 .to("sharkjdbc:{\"queryName\": \"father\",\"dataSourceId\": \"datasource\",\"sql\": \"select * from test where id = ${body}\",\"child\": [{\"queryName\": \"son\",\"dataSourceId\": \"datasource\",\"sql\": \"select * from grade where name = ${parent.name}\",\"child\": [{\"queryName\": \"grandSon\",\"dataSourceId\": \"datasource\",\"sql\": \"select * from grade where name = ${parent.name}\"}]}]}")
-                .to("http://0.0.0.0:10002?bridgeEndpoint=true")
                 .to("log:ss");
 
         from("jetty:http://0.0.0.0:7777/testHttp")

@@ -2,8 +2,8 @@
 
 camel自研组件
 扩展JDBC组件 实现SPLIT,分组查询,输出结构等功能操作
-示例demo
 
+1.实现jdbc子查询,关联查询的功能,示例demo为
 
         from("jetty:http://0.0.0.0:8888/s").id("selfRoute")
                 .autoStartup(true).convertBodyTo(String.class, "UTF-8")
