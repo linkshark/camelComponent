@@ -1,7 +1,9 @@
 package com.linkjb.camelcomponent.camel;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.camel.*;
+import org.apache.camel.CamelContext;
+import org.apache.camel.Exchange;
+import org.apache.camel.Producer;
 import org.apache.camel.component.http.HttpComponent;
 import org.apache.camel.component.http.HttpEndpoint;
 import org.apache.camel.support.DefaultExchange;
@@ -35,6 +37,7 @@ public class HttpComponentTest {
         Producer producer = endpoint.createProducer();
         producer.start();
         producer.process(exchange);
+        producer.close();
         //http.createProducer(camelContext,)
         log.info("ss");
     }
