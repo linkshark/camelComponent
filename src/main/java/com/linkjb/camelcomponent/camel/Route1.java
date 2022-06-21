@@ -22,7 +22,7 @@ public class Route1 extends RouteBuilder {
 //        from("jetty:http://0.0.0.0:8848/gocount").id("test2")
 //                .autoStartup(true).convertBodyTo(String.class, "UTF-8").setBody(constant("select count(*) from test"))
 //                .to("jdbc:datasource")
-//                .to("log:ss");
+//                .to("log:ss");'
 //
         from("jetty:http://0.0.0.0:8848/random").id("test3")
                 .autoStartup(true).convertBodyTo(String.class, "UTF-8")

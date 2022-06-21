@@ -86,7 +86,7 @@ public class NewDefaultJdbcPrepareStatementStrategy implements NewJdbcPrepareSta
             try {
 
                 return new Iterator<Object>() {
-                    private NamedQueryParser parser = new NamedQueryParser(query);
+                    private final NamedQueryParser parser = new NamedQueryParser(query);
                     private Object next;
                     private boolean done;
                     private boolean preFetched;
