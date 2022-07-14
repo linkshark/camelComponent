@@ -26,7 +26,10 @@ public class Route1 extends RouteBuilder {
 //
         from("jetty:http://0.0.0.0:8848/random").id("test3")
                 .autoStartup(true).convertBodyTo(String.class, "UTF-8")
-                .to("jdbc:datasource?transacted=true&statement.maxRows=1")
+                .setHeader("name", constant("小A"))
+                .setHeader("id", constant("1"))
+                .setBody(constant("\"select * from test where name = :?name and id = :?id order by id\""))
+                .to("jdbc:datasource?transacted=true&statement.maxRows=1&useHeadersAsParameters=true")
                 //useHeadersAsParameters=true
                 .to("log:ss");
 

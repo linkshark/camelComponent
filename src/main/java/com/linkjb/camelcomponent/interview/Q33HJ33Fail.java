@@ -27,8 +27,10 @@ import java.util.Scanner;
 //        复制
 //        输出：
 //        zvbo9441987
-public class Q33HJ33 {
+public class Q33HJ33Fail {
     public static void main(String[] args) {
+        double pow = Math.pow(2, 0);
+
         //65A 90Z 97 a 122 z
         Scanner sc = new Scanner(System.in);
         while (sc.hasNext()) {
@@ -51,12 +53,9 @@ public class Q33HJ33 {
                 String s = sb.toString();
                 Long count = Long.valueOf(0);
                 for (int i = 0; i < s.length(); i++) {
-                    double paw = Math.pow(2, s.length() - i - 1);
+                    Double paw = Math.pow(2, s.length() - i - 1);
                     Double v = Integer.parseInt(s.substring(i, i + 1)) * paw;
                     count += v.intValue();
-                }
-                if (count >= 3072281365L) {
-                    count++;
                 }
                 System.out.println(count);
             } else {

@@ -30,7 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Default {@link JdbcPrepareStatementStrategy} which is a copy from the camel-sql component having this functionality
+ * Default {@link } which is a copy from the camel-sql component having this functionality
  * first.
  */
 public class NewDefaultJdbcPrepareStatementStrategy implements NewJdbcPrepareStatementStrategy {
@@ -43,7 +43,7 @@ public class NewDefaultJdbcPrepareStatementStrategy implements NewJdbcPrepareSta
         if (allowNamedParameters && hasNamedParameters(query)) {
             // replace all :?word with just ?
             //answer = query.replaceAll("\\:\\?\\w+", "\\?");
-            answer = query.replaceAll("\\$\\{.*\\}", "\\?");
+            answer = query.replaceAll("\\$\\{((?!\\{).)*\\}", "\\?");
         } else {
             answer = query;
         }
@@ -196,7 +196,7 @@ public class NewDefaultJdbcPrepareStatementStrategy implements NewJdbcPrepareSta
     private static final class NamedQueryParser {
 
         //private static final Pattern PATTERN = Pattern.compile("\\:\\?(\\w+)");
-        private static final Pattern PATTERN = Pattern.compile("\\$\\{.*\\}");
+        private static final Pattern PATTERN = Pattern.compile("\\$\\{((?!\\{).)*\\}");
 
         private final Matcher matcher;
 
