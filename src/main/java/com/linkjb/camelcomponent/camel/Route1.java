@@ -1,7 +1,9 @@
 package com.linkjb.camelcomponent.camel;
 
 
+import org.apache.camel.CamelContext;
 import org.apache.camel.builder.RouteBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,8 +14,11 @@ import org.springframework.stereotype.Component;
  **/
 @Component
 public class Route1 extends RouteBuilder {
+    @Autowired
+    CamelContext camelContext;
     @Override
     public void configure() {
+
 //        from("jetty:http://0.0.0.0:8848/go").id("test1")
 //                .autoStartup(true).convertBodyTo(String.class, "UTF-8").setBody(constant("select * from test"))
 //                .to("jdbc:datasource")
