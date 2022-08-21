@@ -16,7 +16,7 @@ public class NullPointerExceptionCoffee {
     private static final Map<Coffee, Integer> orderedCoffee = new HashMap<>();
     private static Integer finalInCome = 0;
     private static Integer customerCount = 0;
-    private static Integer reardCount = 5;
+    private static Integer rewardCount = 5;
 
 
     static {
