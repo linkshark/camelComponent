@@ -1,14 +1,8 @@
 package com.linkjb.camelcomponent.pool;
 
 
-
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * author shark
@@ -311,9 +305,11 @@ public class Demo1 {
     public static void main(String[] args) throws Exception {
 //		new Demo1().threadPoolExecutorTest1();
 //        new Demo1().threadPoolExecutorTest2();
-//		new Demo1().threadPoolExecutorTest3();
-//		new Demo().threadPoolExecutorTest4();
-//		new Demo().threadPoolExecutorTest5();
+
+
+        //   new Demo1().threadPoolExecutorTest3();
+        //	new Demo1().threadPoolExecutorTest4();
+//		new Demo1().threadPoolExecutorTest5();
 //		new Demo().threadPoolExecutorTest6();
 //		new Demo().threadPoolExecutorTest7();
         //  new Demo().threadPoolExecutorTest1();
