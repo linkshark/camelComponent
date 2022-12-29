@@ -19,10 +19,10 @@ public class Route1 extends RouteBuilder {
     @Override
     public void configure() {
 
-//        from("jetty:http://0.0.0.0:8848/go").id("test1")
-//                .autoStartup(true).convertBodyTo(String.class, "UTF-8").setBody(constant("select * from test"))
-//                .to("jdbc:datasource")
-//                .to("log:ss");
+        from("jetty:http://0.0.0.0:8848/go").id("test1")
+                .autoStartup(true).convertBodyTo(String.class, "UTF-8").setBody(constant("select * from test"))
+                .to("jdbc:datasource")
+                .to("log:ss");
 //
 //        from("jetty:http://0.0.0.0:8848/gocount").id("test2")
 //                .autoStartup(true).convertBodyTo(String.class, "UTF-8").setBody(constant("select count(*) from test"))
